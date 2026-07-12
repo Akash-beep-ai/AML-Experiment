@@ -33,6 +33,8 @@
 </div>
 
 
+<!-- REGRESSION RESULT -->
+
 <div id="resultBox"
 style="display:none; padding:16px; border:1px solid #ccc; border-radius:10px; margin-bottom:20px;">
 
@@ -80,13 +82,31 @@ style="display:none; padding:16px; border:1px solid #ccc; border-radius:10px; ma
 </div>
 
 
+<!-- REGRESSION GRAPH -->
+
 <div id="chartWrap"
-style="display:none; width:100%; height:300px;">
+style="display:none; width:100%; height:300px; margin-bottom:30px;">
+
+  <h3>Linear Regression Graph</h3>
 
   <canvas id="regChart"></canvas>
 
 </div>
 
+
+<!-- MODEL METRICS GRAPH -->
+
+<div id="metricsChartWrap"
+style="display:none; width:100%; height:300px; margin-top:40px;">
+
+  <h3>Model Evaluation Graph</h3>
+
+  <canvas id="metricsChart"></canvas>
+
+</div>
+
+
+<!-- CHART JS -->
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 
@@ -97,8 +117,13 @@ let points = [];
 
 let chartInstance = null;
 
+let metricsChartInstance = null;
 
+
+
+/* ===================================== */
 /* DISPLAY POINTS */
+/* ===================================== */
 
 function renderPointsList() {
 
@@ -119,7 +144,10 @@ function renderPointsList() {
 }
 
 
+
+/* ===================================== */
 /* CALCULATE REGRESSION */
+/* ===================================== */
 
 function computeRegression() {
 
@@ -155,10 +183,12 @@ function computeRegression() {
 
 
   const numeratorM =
+
     (n * sumXY) - (sumX * sumY);
 
 
   const denominatorM =
+
     (n * sumX2) - (sumX * sumX);
 
 
@@ -169,14 +199,18 @@ function computeRegression() {
   }
 
 
-  /* M VALUE */
+  /* SLOPE */
 
-  const m = numeratorM / denominatorM;
+  const m =
+
+    numeratorM / denominatorM;
 
 
-  /* C VALUE */
+  /* INTERCEPT */
 
-  const c = (sumY - (m * sumX)) / n;
+  const c =
+
+    (sumY - (m * sumX)) / n;
 
 
   return {
@@ -190,14 +224,17 @@ function computeRegression() {
 }
 
 
+
+/* ===================================== */
 /* CALCULATE MODEL METRICS */
+/* ===================================== */
 
 function calculateMetrics(m, c) {
 
   const n = points.length;
 
 
-  /* MEAN OF Y */
+  /* MEAN Y */
 
   const meanY =
 
@@ -257,11 +294,13 @@ function calculateMetrics(m, c) {
   });
 
 
+
   /* MSE */
 
   const mse =
 
     squaredError / n;
+
 
 
   /* RMSE */
@@ -271,6 +310,7 @@ function calculateMetrics(m, c) {
     Math.sqrt(mse);
 
 
+
   /* MAE */
 
   const mae =
@@ -278,13 +318,17 @@ function calculateMetrics(m, c) {
     absoluteError / n;
 
 
+
   /* R SQUARE */
 
   let r2;
 
+
   if (totalSumSquares === 0) {
 
-    r2 = squaredError === 0 ? 1 : 0;
+    r2 =
+
+      squaredError === 0 ? 1 : 0;
 
   } else {
 
@@ -310,7 +354,10 @@ function calculateMetrics(m, c) {
 }
 
 
+
+/* ===================================== */
 /* ADD POINT */
+/* ===================================== */
 
 document.getElementById("addBtn")
 .addEventListener("click", function() {
@@ -367,7 +414,10 @@ document.getElementById("addBtn")
 });
 
 
-/* COMPUTE BUTTON */
+
+/* ===================================== */
+/* COMPUTE REGRESSION */
+/* ===================================== */
 
 document.getElementById("submitBtn")
 .addEventListener("click", function() {
@@ -429,6 +479,7 @@ document.getElementById("submitBtn")
     result.c.toFixed(4);
 
 
+
   /* EQUATION */
 
   const sign =
@@ -442,12 +493,14 @@ document.getElementById("submitBtn")
     `Y = ${result.m.toFixed(4)}x ${sign} ${Math.abs(result.c).toFixed(4)}`;
 
 
+
   /* MSE */
 
   document.getElementById("mseValue")
     .textContent =
 
     metrics.mse.toFixed(4);
+
 
 
   /* RMSE */
@@ -458,12 +511,14 @@ document.getElementById("submitBtn")
     metrics.rmse.toFixed(4);
 
 
+
   /* MAE */
 
   document.getElementById("maeValue")
     .textContent =
 
     metrics.mae.toFixed(4);
+
 
 
   /* R SQUARE */
@@ -476,7 +531,10 @@ document.getElementById("submitBtn")
 });
 
 
+
+/* ===================================== */
 /* VISUALIZE */
+/* ===================================== */
 
 document.getElementById("visualizeBtn")
 .addEventListener("click", function() {
@@ -504,6 +562,20 @@ document.getElementById("visualizeBtn")
 
   }
 
+
+  const metrics =
+
+    calculateMetrics(
+
+      result.m,
+
+      result.c
+
+    );
+
+
+
+  /* SHOW GRAPH */
 
   document.getElementById("chartWrap")
     .style.display = "block";
@@ -539,12 +611,16 @@ document.getElementById("visualizeBtn")
     maxX + padding;
 
 
+
   if (chartInstance) {
 
     chartInstance.destroy();
 
   }
 
+
+
+  /* LINEAR REGRESSION GRAPH */
 
   chartInstance = new Chart(
 
@@ -654,10 +730,142 @@ document.getElementById("visualizeBtn")
 
   );
 
+
+
+  /* ===================================== */
+  /* MODEL METRICS GRAPH */
+  /* ===================================== */
+
+
+  document.getElementById("metricsChartWrap")
+    .style.display = "block";
+
+
+  if (metricsChartInstance) {
+
+    metricsChartInstance.destroy();
+
+  }
+
+
+  metricsChartInstance = new Chart(
+
+    document.getElementById("metricsChart"),
+
+    {
+
+      type: "bar",
+
+
+      data: {
+
+        labels: [
+
+          "MSE",
+
+          "RMSE",
+
+          "MAE",
+
+          "R² Score"
+
+        ],
+
+
+        datasets: [
+
+          {
+
+            label: "Model Evaluation Metrics",
+
+
+            data: [
+
+              metrics.mse,
+
+              metrics.rmse,
+
+              metrics.mae,
+
+              metrics.r2
+
+            ],
+
+
+            backgroundColor: [
+
+              "#e34948",
+
+              "#f39c12",
+
+              "#2a78d6",
+
+              "#27ae60"
+
+            ],
+
+
+            borderWidth: 1
+
+          }
+
+        ]
+
+      },
+
+
+      options: {
+
+        responsive: true,
+
+        maintainAspectRatio: false,
+
+
+        scales: {
+
+          y: {
+
+            beginAtZero: true,
+
+
+            title: {
+
+              display: true,
+
+              text: "Metric Value"
+
+            }
+
+          },
+
+
+          x: {
+
+            title: {
+
+              display: true,
+
+              text: "Evaluation Metric"
+
+            }
+
+          }
+
+        }
+
+      }
+
+    }
+
+  );
+
 });
 
 
+
+/* ===================================== */
 /* RESET */
+/* ===================================== */
 
 document.getElementById("resetBtn")
 .addEventListener("click", function() {
@@ -677,6 +885,10 @@ document.getElementById("resetBtn")
     .style.display = "none";
 
 
+  document.getElementById("metricsChartWrap")
+    .style.display = "none";
+
+
   document.getElementById("xInput")
     .value = "";
 
@@ -684,6 +896,9 @@ document.getElementById("resetBtn")
   document.getElementById("yInput")
     .value = "";
 
+
+
+  /* DESTROY REGRESSION GRAPH */
 
   if (chartInstance) {
 
@@ -693,8 +908,23 @@ document.getElementById("resetBtn")
 
   }
 
+
+
+  /* DESTROY METRICS GRAPH */
+
+  if (metricsChartInstance) {
+
+    metricsChartInstance.destroy();
+
+    metricsChartInstance = null;
+
+  }
+
 });
 
+
+
+/* INITIAL DISPLAY */
 
 renderPointsList();
 
