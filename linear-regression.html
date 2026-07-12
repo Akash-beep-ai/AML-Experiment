@@ -1,0 +1,701 @@
+<h2>Linear Regression Calculator</h2>
+
+<div style="display:flex; gap:8px; align-items:flex-end; margin-bottom:8px;">
+
+  <div style="flex:1;">
+    <label>X value</label>
+    <input type="number" id="xInput" placeholder="e.g. 4" step="any">
+  </div>
+
+  <div style="flex:1;">
+    <label>Y value</label>
+    <input type="number" id="yInput" placeholder="e.g. 8" step="any">
+  </div>
+
+  <button id="addBtn">Add</button>
+
+</div>
+
+
+<div id="pointsList" style="margin-bottom:16px;">
+  No points added yet.
+</div>
+
+
+<div style="display:flex; gap:8px; margin-bottom:20px;">
+
+  <button id="submitBtn">Compute Regression</button>
+
+  <button id="visualizeBtn">Visualize</button>
+
+  <button id="resetBtn">Reset</button>
+
+</div>
+
+
+<div id="resultBox"
+style="display:none; padding:16px; border:1px solid #ccc; border-radius:10px; margin-bottom:20px;">
+
+  <h3>Regression Result</h3>
+
+  <p>
+    M (Slope):
+    <strong id="mValue"></strong>
+  </p>
+
+  <p>
+    C (Intercept):
+    <strong id="cValue"></strong>
+  </p>
+
+  <p>
+    Equation:
+    <strong id="equationOut"></strong>
+  </p>
+
+  <hr>
+
+  <h3>Model Evaluation</h3>
+
+  <p>
+    MSE (Mean Squared Error):
+    <strong id="mseValue"></strong>
+  </p>
+
+  <p>
+    RMSE (Root Mean Squared Error):
+    <strong id="rmseValue"></strong>
+  </p>
+
+  <p>
+    MAE (Mean Absolute Error):
+    <strong id="maeValue"></strong>
+  </p>
+
+  <p>
+    R² Score:
+    <strong id="r2Value"></strong>
+  </p>
+
+</div>
+
+
+<div id="chartWrap"
+style="display:none; width:100%; height:300px;">
+
+  <canvas id="regChart"></canvas>
+
+</div>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+
+
+<script>
+
+let points = [];
+
+let chartInstance = null;
+
+
+/* DISPLAY POINTS */
+
+function renderPointsList() {
+
+  const list = document.getElementById("pointsList");
+
+  if (points.length === 0) {
+
+    list.textContent = "No points added yet.";
+
+  } else {
+
+    list.textContent = points
+      .map(point => `(${point.x}, ${point.y})`)
+      .join("   ");
+
+  }
+
+}
+
+
+/* CALCULATE REGRESSION */
+
+function computeRegression() {
+
+  const n = points.length;
+
+  if (n < 2) {
+
+    return null;
+
+  }
+
+
+  let sumX = 0;
+
+  let sumY = 0;
+
+  let sumXY = 0;
+
+  let sumX2 = 0;
+
+
+  points.forEach(point => {
+
+    sumX += point.x;
+
+    sumY += point.y;
+
+    sumXY += point.x * point.y;
+
+    sumX2 += point.x * point.x;
+
+  });
+
+
+  const numeratorM =
+    (n * sumXY) - (sumX * sumY);
+
+
+  const denominatorM =
+    (n * sumX2) - (sumX * sumX);
+
+
+  if (Math.abs(denominatorM) < Number.EPSILON) {
+
+    return null;
+
+  }
+
+
+  /* M VALUE */
+
+  const m = numeratorM / denominatorM;
+
+
+  /* C VALUE */
+
+  const c = (sumY - (m * sumX)) / n;
+
+
+  return {
+
+    m: m,
+
+    c: c
+
+  };
+
+}
+
+
+/* CALCULATE MODEL METRICS */
+
+function calculateMetrics(m, c) {
+
+  const n = points.length;
+
+
+  /* MEAN OF Y */
+
+  const meanY =
+
+    points.reduce(
+
+      (sum, point) => sum + point.y,
+
+      0
+
+    ) / n;
+
+
+  let squaredError = 0;
+
+  let absoluteError = 0;
+
+  let totalSumSquares = 0;
+
+
+  points.forEach(point => {
+
+
+    /* PREDICTED Y */
+
+    const predictedY =
+
+      (m * point.x) + c;
+
+
+    /* ERROR */
+
+    const error =
+
+      point.y - predictedY;
+
+
+    /* SQUARED ERROR */
+
+    squaredError +=
+
+      error * error;
+
+
+    /* ABSOLUTE ERROR */
+
+    absoluteError +=
+
+      Math.abs(error);
+
+
+    /* TOTAL SUM OF SQUARES */
+
+    totalSumSquares +=
+
+      Math.pow(point.y - meanY, 2);
+
+  });
+
+
+  /* MSE */
+
+  const mse =
+
+    squaredError / n;
+
+
+  /* RMSE */
+
+  const rmse =
+
+    Math.sqrt(mse);
+
+
+  /* MAE */
+
+  const mae =
+
+    absoluteError / n;
+
+
+  /* R SQUARE */
+
+  let r2;
+
+  if (totalSumSquares === 0) {
+
+    r2 = squaredError === 0 ? 1 : 0;
+
+  } else {
+
+    r2 =
+
+      1 - (squaredError / totalSumSquares);
+
+  }
+
+
+  return {
+
+    mse: mse,
+
+    rmse: rmse,
+
+    mae: mae,
+
+    r2: r2
+
+  };
+
+}
+
+
+/* ADD POINT */
+
+document.getElementById("addBtn")
+.addEventListener("click", function() {
+
+
+  const xInput =
+
+    document.getElementById("xInput");
+
+
+  const yInput =
+
+    document.getElementById("yInput");
+
+
+  const x =
+
+    parseFloat(xInput.value);
+
+
+  const y =
+
+    parseFloat(yInput.value);
+
+
+  if (isNaN(x) || isNaN(y)) {
+
+    alert("Please enter both X and Y values");
+
+    return;
+
+  }
+
+
+  points.push({
+
+    x: x,
+
+    y: y
+
+  });
+
+
+  xInput.value = "";
+
+  yInput.value = "";
+
+
+  xInput.focus();
+
+
+  renderPointsList();
+
+});
+
+
+/* COMPUTE BUTTON */
+
+document.getElementById("submitBtn")
+.addEventListener("click", function() {
+
+
+  if (points.length < 2) {
+
+    alert("Please add at least 2 points");
+
+    return;
+
+  }
+
+
+  const result =
+
+    computeRegression();
+
+
+  if (result === null) {
+
+    alert(
+      "Regression cannot be calculated because all X values are equal"
+    );
+
+    return;
+
+  }
+
+
+  const metrics =
+
+    calculateMetrics(
+
+      result.m,
+
+      result.c
+
+    );
+
+
+  document.getElementById("resultBox")
+    .style.display = "block";
+
+
+  /* SHOW M */
+
+  document.getElementById("mValue")
+    .textContent =
+
+    result.m.toFixed(4);
+
+
+  /* SHOW C */
+
+  document.getElementById("cValue")
+    .textContent =
+
+    result.c.toFixed(4);
+
+
+  /* EQUATION */
+
+  const sign =
+
+    result.c >= 0 ? "+" : "-";
+
+
+  document.getElementById("equationOut")
+    .textContent =
+
+    `Y = ${result.m.toFixed(4)}x ${sign} ${Math.abs(result.c).toFixed(4)}`;
+
+
+  /* MSE */
+
+  document.getElementById("mseValue")
+    .textContent =
+
+    metrics.mse.toFixed(4);
+
+
+  /* RMSE */
+
+  document.getElementById("rmseValue")
+    .textContent =
+
+    metrics.rmse.toFixed(4);
+
+
+  /* MAE */
+
+  document.getElementById("maeValue")
+    .textContent =
+
+    metrics.mae.toFixed(4);
+
+
+  /* R SQUARE */
+
+  document.getElementById("r2Value")
+    .textContent =
+
+    metrics.r2.toFixed(4);
+
+});
+
+
+/* VISUALIZE */
+
+document.getElementById("visualizeBtn")
+.addEventListener("click", function() {
+
+
+  if (points.length < 2) {
+
+    alert("Add at least 2 points first");
+
+    return;
+
+  }
+
+
+  const result =
+
+    computeRegression();
+
+
+  if (result === null) {
+
+    alert("Cannot create regression graph");
+
+    return;
+
+  }
+
+
+  document.getElementById("chartWrap")
+    .style.display = "block";
+
+
+  const xValues =
+
+    points.map(point => point.x);
+
+
+  const minX =
+
+    Math.min(...xValues);
+
+
+  const maxX =
+
+    Math.max(...xValues);
+
+
+  const padding =
+
+    (maxX - minX) * 0.1 || 1;
+
+
+  const lineStart =
+
+    minX - padding;
+
+
+  const lineEnd =
+
+    maxX + padding;
+
+
+  if (chartInstance) {
+
+    chartInstance.destroy();
+
+  }
+
+
+  chartInstance = new Chart(
+
+    document.getElementById("regChart"),
+
+    {
+
+      type: "scatter",
+
+
+      data: {
+
+        datasets: [
+
+          {
+
+            label: "Actual Data",
+
+            data: points,
+
+            backgroundColor: "#2a78d6",
+
+            pointRadius: 6
+
+          },
+
+
+          {
+
+            label: "Regression Line",
+
+            type: "line",
+
+            data: [
+
+              {
+
+                x: lineStart,
+
+                y: result.m * lineStart + result.c
+
+              },
+
+
+              {
+
+                x: lineEnd,
+
+                y: result.m * lineEnd + result.c
+
+              }
+
+            ],
+
+            borderColor: "#e34948",
+
+            borderWidth: 3,
+
+            pointRadius: 0
+
+          }
+
+        ]
+
+      },
+
+
+      options: {
+
+        responsive: true,
+
+        maintainAspectRatio: false,
+
+
+        scales: {
+
+          x: {
+
+            title: {
+
+              display: true,
+
+              text: "X Value"
+
+            }
+
+          },
+
+
+          y: {
+
+            title: {
+
+              display: true,
+
+              text: "Y Value"
+
+            }
+
+          }
+
+        }
+
+      }
+
+    }
+
+  );
+
+});
+
+
+/* RESET */
+
+document.getElementById("resetBtn")
+.addEventListener("click", function() {
+
+
+  points = [];
+
+
+  renderPointsList();
+
+
+  document.getElementById("resultBox")
+    .style.display = "none";
+
+
+  document.getElementById("chartWrap")
+    .style.display = "none";
+
+
+  document.getElementById("xInput")
+    .value = "";
+
+
+  document.getElementById("yInput")
+    .value = "";
+
+
+  if (chartInstance) {
+
+    chartInstance.destroy();
+
+    chartInstance = null;
+
+  }
+
+});
+
+
+renderPointsList();
+
+</script>
