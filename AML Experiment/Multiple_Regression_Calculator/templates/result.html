@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Multiple Linear Regression Result</title>
+</head>
+<body>
+
+<h2>Multiple Linear Regression Result</h2>
+
+<p><b>Regression Equation:</b></p>
+<p>{{ equation }}</p>
+
+<hr>
+
+<p><b>MAE:</b> {{ mae }}</p>
+<p><b>MSE:</b> {{ mse }}</p>
+<p><b>RMSE:</b> {{ rmse }}</p>
+<p><b>R² Score:</b> {{ r2 }}</p>
+
+<hr>
+
+<h3>Actual vs Predicted Graph</h3>
+
+<img src="data:image/png;base64,{{ graph }}" width="650">
+
+<br><br>
+
+<h3>Performance Metrics Graph</h3>
+
+<img src="data:image/png;base64,{{ graph2 }}" width="650">
+
+<br><br>
+
+<a href="/">⬅ Back</a>
+
+</body>
+</html>
